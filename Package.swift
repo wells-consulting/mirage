@@ -1,5 +1,4 @@
 // swift-tools-version: 6.2
-// The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
@@ -13,12 +12,11 @@ let package = Package(
     ],
     products: [
         .library(name: "Mirage", targets: ["Mirage"]),
-        .library(name: "MirageUI", targets: ["MirageUI"]),
+        .library(name: "MirageUI", targets: ["MirageUI"])
     ],
     targets: [
         .target(
             name: "Mirage",
-            dependencies: [],
             path: "Sources/Mirage"
         ),
         .testTarget(
@@ -29,7 +27,7 @@ let package = Package(
         .target(
             name: "MirageUI",
             dependencies: ["Mirage"],
-            path: "Sources/MirageUI",
-        ),
+            path: "Sources/MirageUI"
+        )
     ]
 )

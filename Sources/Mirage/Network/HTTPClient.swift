@@ -15,7 +15,7 @@ public actor HTTPClient {
     private var additionalHeaders: [String: String] = [:]
     private let logOptions: LogOptions
     private let jsonCoder: JSONCoder
-    private let log = OSLog(category: "HTTPClient")
+    private let logger = PlatformLogger(category: "HTTPClient")
 
     // MARK: Initializer
 
@@ -74,9 +74,9 @@ public actor HTTPClient {
 
         if logOptions.contains(.request) {
             if logOptions.contains(.requestBody), let summary = httpRequest.payloadSummary {
-                log.debug("\(httpRequest.requestSummary): \(summary)")
+                logger.debug("\(httpRequest.requestSummary): \(summary)")
             } else {
-                log.debug(httpRequest.requestSummary)
+                logger.debug(httpRequest.requestSummary)
             }
         }
 
@@ -99,7 +99,7 @@ public actor HTTPClient {
 
         if shouldLogResponse {
             let message = httpResponse.logDescription(includeResponseBody: shouldLogResponseBody)
-            log.debug(message)
+            logger.debug(message)
         }
 
         // Unrecoverable error: response must be an HTTPURLResponse
@@ -125,7 +125,7 @@ public actor HTTPClient {
 
     // MARK: - Headers
 
-    public func header(name: String) -> String? {
+    public func header(_ name: String) -> String? {
         additionalHeaders[name]
     }
 
@@ -133,7 +133,7 @@ public actor HTTPClient {
         if let value {
             insertHeader(name: name, value: value)
         } else {
-            removeHeader(name: name)
+            removeHeader(name)
         }
     }
 
@@ -141,8 +141,18 @@ public actor HTTPClient {
         setHeader(name: name, value: value)
     }
 
-    public func removeHeader(name: String) {
+    public func removeHeader(_ name: String) {
         setHeader(name: name, value: nil)
+    }
+
+    // MARK: - Helpers
+
+    public func setAuthToken(_ authToken: OAuthToken?) {
+        if let accessToken = authToken?.accessToken {
+            setHeader(name: "Authorization", value: "Bearer \(accessToken)")
+        } else {
+            removeHeader("Authorization")
+        }
     }
 }
 

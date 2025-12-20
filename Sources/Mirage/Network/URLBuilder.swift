@@ -475,14 +475,3 @@ public final class URLBuilder {
         }
     }
 }
-
-// MARK: - URL Extension
-
-public extension URL {
-    static func from(_ string: String) throws -> URL {
-        guard let url = URL(string: string) else {
-            throw Mirage.Error(description: "Supplied string \"\(string)\" is not a valid URL.", title: "URL Parsing Failed")
-        }
-        return url
-    }
-}

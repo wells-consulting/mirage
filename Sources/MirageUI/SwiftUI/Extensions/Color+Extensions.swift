@@ -29,7 +29,7 @@ public extension Color {
     }
 
     func hexString() throws -> String? {
-        guard let components = OSColor(self).cgColor.components else {
+        guard let components = PlatformColor(self).cgColor.components else {
             return nil
         }
 

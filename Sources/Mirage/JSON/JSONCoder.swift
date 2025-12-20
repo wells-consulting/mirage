@@ -7,7 +7,7 @@ import Foundation
 
 public struct JSONCoder: Sendable {
 
-    private let log = OSLog(category: "JSONCoder")
+    private let logger = PlatformLogger(category: "JSONCoder")
 
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
@@ -85,7 +85,7 @@ public struct JSONCoder: Sendable {
             message = "\(T.self): \(error)"
         }
 
-        log.error(message)
+        logger.error(message)
 
         let errorContext: [String: any Sendable]? = if let context {
             Dictionary(uniqueKeysWithValues: context.map { ($0.key.rawValue, $0.value) })
@@ -112,7 +112,7 @@ public struct JSONCoder: Sendable {
     public func decode<T: Decodable>(_ data: Data?, context: [CodingUserInfoKey: Sendable]? = nil) throws -> T {
         guard let data else {
             let message = "\(T.self) could not be created: no data"
-            log.error(message)
+            logger.error(message)
             throw Self.Error(description: message, process: .decode, data: nil)
         }
 
@@ -170,7 +170,7 @@ public struct JSONCoder: Sendable {
             message = "\(T.self): \(error)"
         }
 
-        log.error(message)
+        logger.error(message)
 
         let errorContext: [String: any Sendable]? = if let context {
             Dictionary(uniqueKeysWithValues: context.map { ($0.key.rawValue, $0.value) })

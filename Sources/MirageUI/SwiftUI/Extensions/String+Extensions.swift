@@ -22,7 +22,7 @@ public extension String {
     private func getAttributedHighlightString(regex: NSRegularExpression, color: Color) throws -> AttributedString {
         let nsAttributedString = NSMutableAttributedString(string: self)
 
-        let replacementColor = OSColor(color)
+        let replacementColor = PlatformColor(color)
 
         for match in regex.matches(in: self, range: NSRange(location: 0, length: count)) {
             for index in 0 ..< match.numberOfRanges {

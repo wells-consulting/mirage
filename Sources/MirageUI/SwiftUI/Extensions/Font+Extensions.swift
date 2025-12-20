@@ -19,7 +19,7 @@ public extension Font {
     // general use, but the results could be cached later if
     // it becomes necessary.
 
-    static func maximumFont(fitting text: String, within shape: FitShape, startingFont font: OSFont, minPointSize: Double = 4.0, maxPointSize: Double = 128.0) -> Font {
+    static func maximumFont(fitting text: String, within shape: FitShape, startingFont font: PlatformFont, minPointSize: Double = 4.0, maxPointSize: Double = 128.0) -> Font {
         var constrainedSize: CGSize
 
         switch shape {
