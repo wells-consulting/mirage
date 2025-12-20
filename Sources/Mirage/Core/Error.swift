@@ -1,0 +1,37 @@
+//
+// Copyright 2025 Wells Consulting.
+// This file is part of Mirage and is released under the MIT License.
+//
+
+import Foundation
+
+public enum Mirage {
+
+    /// General purpose Mirage error.
+    public struct Error: MirageError {
+
+        /// Localized error description
+        public let description: String
+
+        /// Localized title text
+        public let title: String?
+
+        /// Wrapped error
+        public let underlyingError: (any Swift.Error)?
+
+        /// Error-specific context
+        public let context: [String: any Sendable]?
+
+        /// - Parameters:
+        ///     - description: Text appropriate for a user-facing alert message
+        ///     - title: Title text appropriate for a user-facing dialog title
+        ///     - underlyingError: UnderlyingError wrapped error
+        ///     - context: Error-specific context
+        public init(description: String, title: String? = nil, underlyingError: (any Swift.Error)? = nil, context: [String: any Sendable]? = nil) {
+            self.description = description
+            self.title = title
+            self.underlyingError = underlyingError
+            self.context = context
+        }
+    }
+}
