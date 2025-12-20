@@ -1,0 +1,29 @@
+### Built-in Rules
+
+--header "\nCopyright 2025 Wells Consulting.\nThis file is part of Mirage and is released under the MIT License.\n"
+
+--ifdef outdent
+--self init-only
+--type-blank-lines preserve
+--wrap-parameters preserve
+## --xcode-indentation enabled
+
+### Opt-in Rules
+
+--enable blankLinesBetweenImports
+--enable blockComments
+--enable environmentEntry
+--enable isEmpty
+--enable preferFinalClasses
+--enable preferKeyPath
+--enable privateStateVariables
+--enable redundantEquatable
+--enable redundantMemberwiseInit
+--enable urlMacro
+
+### Disabled rules
+
+--disable modifiersOnSameLine
+--disable preferKeyPath
+--disable trailingCommas
+--disable unusedArguments
