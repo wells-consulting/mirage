@@ -50,8 +50,8 @@ public struct PlatformLogger: Sendable {
     }
 }
 
-extension PlatformLogger {
-    public func error(_ error: any Error, task: String? = nil, file: StaticString = #fileID, line: UInt = #line) {
+public extension PlatformLogger {
+    func error(_ error: any Error, task: String? = nil, file: StaticString = #fileID, line: UInt = #line) {
         let message = if let task {
             "\(task) failed with error: \(error)"
         } else {
