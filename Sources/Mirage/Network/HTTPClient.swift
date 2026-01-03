@@ -55,10 +55,10 @@ public actor HTTPClient {
         }
     }
 
-    public init(configuration: Configuration) {
+    public init(configuration: Configuration = .init()) {
         let urlSessionConfiguration = URLSessionConfiguration.default
         urlSessionConfiguration.httpAdditionalHeaders = configuration.headers
-        urlSessionConfiguration.timeoutIntervalForRequest = Request.defaultTimeout
+        urlSessionConfiguration.timeoutIntervalForRequest = ClientRequest.defaultTimeout
         urlSessionConfiguration.httpCookieStorage = HTTPCookieStorage.shared
 
         self.urlSession = URLSession(configuration: urlSessionConfiguration)
@@ -74,21 +74,21 @@ public actor HTTPClient {
 
     private nonisolated(unsafe) static let requestCounter = RequestCounter()
 
-    func sendRequest(_ httpRequest: Request) async throws -> (Data?, HTTPURLResponse) {
-        let logOptions = httpRequest.logOptions ?? logOptions
+    private func sendRequest(_ clientRequest: ClientRequest) async throws -> Data? {
+        let logOptions = clientRequest.logOptions ?? logOptions
 
         if logOptions.contains(.request) {
-            if logOptions.contains(.requestBody), let summary = httpRequest.payloadSummary {
-                logger.debug("\(httpRequest.requestSummary): \(summary)")
+            if logOptions.contains(.requestBody), let summary = clientRequest.payloadSummary {
+                logger.debug("\(clientRequest.requestSummary): \(summary)")
             } else {
-                logger.debug(httpRequest.requestSummary)
+                logger.debug(clientRequest.requestSummary)
             }
         }
 
         let shouldLogResponse = logOptions.contains(.response)
         let shouldLogResponseBody = logOptions.contains(.responseBody)
 
-        var urlRequest = httpRequest.urlRequest
+        var urlRequest = clientRequest.urlRequest
 
         for (name, value) in additionalHeaders {
             if urlRequest.allHTTPHeaderFields == nil {
@@ -100,7 +100,7 @@ public actor HTTPClient {
 
         let (data, urlResponse) = try await urlSession.data(for: urlRequest)
 
-        let httpResponse = Response(httpRequest: httpRequest, urlResponse: urlResponse, data: data)
+        let httpResponse = ClientResponse(clientRequest: clientRequest, urlResponse: urlResponse, data: data)
 
         if shouldLogResponse {
             let message = httpResponse.logDescription(includeResponseBody: shouldLogResponseBody)
@@ -110,22 +110,22 @@ public actor HTTPClient {
         // Unrecoverable error: response must be an HTTPURLResponse
 
         guard let httpURLResponse = urlResponse as? HTTPURLResponse else {
-            throw Self.Error(request: httpRequest, statusCode: nil, data: data)
+            throw Self.Error(clientRequest: clientRequest, statusCode: nil, data: data)
         }
 
         // Unrecoverable error: status code must be known
 
         guard let statusCode = StatusCode(rawValue: httpURLResponse.statusCode) else {
-            throw Self.Error(request: httpRequest, statusCode: nil, data: data)
+            throw Self.Error(clientRequest: clientRequest, statusCode: nil, data: data)
         }
 
         // Failure is not an option
 
         guard statusCode.isSuccess else {
-            throw Self.Error(request: httpRequest, statusCode: statusCode, data: data)
+            throw Self.Error(clientRequest: clientRequest, statusCode: statusCode, data: data)
         }
 
-        return (data, httpURLResponse)
+        return data
     }
 
     // MARK: - Headers
@@ -185,11 +185,11 @@ extension HTTPClient {
     }
 }
 
-// MARK: Request
+// MARK: ClientRequest
 
 extension HTTPClient {
 
-    struct Request {
+    fileprivate struct ClientRequest {
 
         let id: Int
         let url: URL
@@ -269,11 +269,11 @@ extension HTTPClient {
     }
 }
 
-// MARK: Response
+// MARK: ClientResponse
 
 extension HTTPClient {
 
-    struct Response {
+    fileprivate struct ClientResponse {
 
         let requestID: Int
         let requestTimestamp: Date
@@ -282,9 +282,9 @@ extension HTTPClient {
 
         let timestamp: Date = .init()
 
-        init(httpRequest: Request, urlResponse: URLResponse?, data: Data?) {
-            self.requestID = httpRequest.id
-            self.requestTimestamp = httpRequest.timestamp
+        init(clientRequest: ClientRequest, urlResponse: URLResponse?, data: Data?) {
+            self.requestID = clientRequest.id
+            self.requestTimestamp = clientRequest.timestamp
             self.statusCode = if let rawValue = (urlResponse as? HTTPURLResponse)?.statusCode {
                 StatusCode(rawValue: rawValue)
             } else {
@@ -578,22 +578,22 @@ public extension HTTPClient {
         /// Error-specific context
         public let context: [String: any Sendable]?
 
-        init(
-            request: Request,
+        fileprivate init(
+            clientRequest: ClientRequest,
             statusCode: StatusCode?,
             data: Data? = nil,
             title: String? = nil,
             underlyingError: (any Swift.Error)? = nil,
             context: [String: any Sendable]? = nil
         ) {
-            let method = request.method
-            let timeRange = request.timestamp ..< (Date.now)
+            let method = clientRequest.method
+            let timeRange = clientRequest.timestamp ..< (Date.now)
 
             self.underlyingError = underlyingError
 
             var implicitContext = context ?? [:]
 
-            self.url = request.url
+            self.url = clientRequest.url
             implicitContext["url"] = url
 
             self.method = method
@@ -640,11 +640,11 @@ public extension HTTPClient {
 
 public extension HTTPClient {
 
-    func get(_ url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func get(_ url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.get, url: url, headers: headers)
     }
 
-    func get<ReceivedObject: Decodable>(_ url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func get<ReceivedObject: Decodable>(_ url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
         try await process(.get, data: nil, url: url, headers: headers, context: context)
     }
 }
@@ -653,19 +653,19 @@ public extension HTTPClient {
 
 public extension HTTPClient {
 
-    func post(_ url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func post(_ url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.post, url: url, headers: headers)
     }
 
-    func post<ReceivedObject: Decodable>(_ data: Data, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func post<ReceivedObject: Decodable>(_ data: Data, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
         try await process(.post, data: data, url: url, headers: headers, context: context)
     }
 
-    func post(_ object: some Encodable, to url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func post(_ object: some Encodable, to url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.post, object: object, url: url, headers: headers)
     }
 
-    func post<ReceivedObject: Decodable>(_ object: some Encodable, to url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func post<ReceivedObject: Decodable>(_ object: some Encodable, to url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> ReceivedObject {
         try await process(.post, object: object, url: url, headers: headers, context: context)
     }
 
@@ -680,11 +680,11 @@ public extension HTTPClient {
         )
     }
 
-    func post(_ form: MultipartForm, to url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func post(_ form: MultipartForm, to url: URL, headers: [String: String] = [:]) async throws -> Data? {
 
         let payload = payload(for: form)
 
-        let request = Request(
+        let request = ClientRequest(
             url: url,
             method: .post,
             payload: payload,
@@ -695,11 +695,11 @@ public extension HTTPClient {
         return try await sendRequest(request)
     }
 
-    func post<ReceivedObject: Decodable>(_ form: MultipartForm, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func post<ReceivedObject: Decodable>(_ form: MultipartForm, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
 
         let payload = payload(for: form)
 
-        let request = Request(
+        let request = ClientRequest(
             url: url,
             method: .post,
             payload: payload,
@@ -721,11 +721,11 @@ public extension HTTPClient {
         )
     }
 
-    func post(_ form: URLEncodedForm, to url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func post(_ form: URLEncodedForm, to url: URL, headers: [String: String] = [:]) async throws -> Data? {
 
         let payload = payload(for: form)
 
-        let request = Request(
+        let request = ClientRequest(
             url: url,
             method: .post,
             payload: payload,
@@ -736,11 +736,11 @@ public extension HTTPClient {
         return try await sendRequest(request)
     }
 
-    func post<ReceivedObject: Decodable>(_ form: URLEncodedForm, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func post<ReceivedObject: Decodable>(_ form: URLEncodedForm, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
 
         let payload = payload(for: form)
 
-        let request = Request(
+        let request = ClientRequest(
             url: url,
             method: .post,
             payload: payload,
@@ -756,19 +756,19 @@ public extension HTTPClient {
 
 public extension HTTPClient {
 
-    func put(_ url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func put(_ url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.put, url: url, headers: headers)
     }
 
-    func put<ReceivedObject: Decodable>(_ data: Data, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func put<ReceivedObject: Decodable>(_ data: Data, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
         try await process(.put, data: data, url: url, headers: headers, context: context)
     }
 
-    func put(_ object: some Encodable, to url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func put(_ object: some Encodable, to url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.put, object: object, url: url, headers: headers)
     }
 
-    func put<ReceivedObject: Decodable>(_ object: some Encodable, to url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func put<ReceivedObject: Decodable>(_ object: some Encodable, to url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> ReceivedObject {
         try await process(.delete, object: object, url: url, headers: headers, context: context)
     }
 }
@@ -777,19 +777,19 @@ public extension HTTPClient {
 
 public extension HTTPClient {
 
-    func delete(_ url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func delete(_ url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.delete, url: url, headers: headers)
     }
 
-    func delete<ReceivedObject: Decodable>(_ data: Data, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func delete<ReceivedObject: Decodable>(_ data: Data, to url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
         try await process(.delete, data: data, url: url, headers: headers, context: context)
     }
 
-    func delete(_ object: some Encodable, to url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    func delete(_ object: some Encodable, to url: URL, headers: [String: String] = [:]) async throws -> Data? {
         try await process(.delete, object: object, url: url, headers: headers)
     }
 
-    func delete<ReceivedObject: Decodable>(_ object: some Encodable, to url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> (ReceivedObject, HTTPURLResponse) {
+    func delete<ReceivedObject: Decodable>(_ object: some Encodable, to url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> ReceivedObject {
         try await process(.delete, object: object, url: url, headers: headers, context: context)
     }
 }
@@ -798,9 +798,9 @@ public extension HTTPClient {
 
 private extension HTTPClient {
 
-    private func process(_ method: Method, url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    private func process(_ method: Method, url: URL, headers: [String: String] = [:]) async throws -> Data? {
         
-        let request = Request(
+        let request = ClientRequest(
             url: url,
             method: method,
             payload: .none,
@@ -811,7 +811,7 @@ private extension HTTPClient {
         return try await sendRequest(request)
     }
 
-    private func process<ReceivedObject: Decodable>(_ method: Method, data: Data?, url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> (ReceivedObject, HTTPURLResponse) {
+    private func process<ReceivedObject: Decodable>(_ method: Method, data: Data?, url: URL, headers: [String: String] = [:], context: [CodingUserInfoKey: Sendable]? = nil) async throws -> ReceivedObject {
 
         let payload = if let data {
             Payload(
@@ -824,7 +824,7 @@ private extension HTTPClient {
             Payload.none
         }
 
-        let request = Request(
+        let request = ClientRequest(
             url: url,
             method: method,
             payload: payload,
@@ -835,7 +835,7 @@ private extension HTTPClient {
         return try await sendRequestAndDecode(request, context: context)
     }
 
-    private func process<SentObject: Encodable>(_ method: Method, object: SentObject, url: URL, headers: [String: String] = [:]) async throws -> (Data?, HTTPURLResponse) {
+    private func process<SentObject: Encodable>(_ method: Method, object: SentObject, url: URL, headers: [String: String] = [:]) async throws -> Data? {
 
         let encodedObject = try jsonCoder.encode(object, context: nil)
 
@@ -846,12 +846,12 @@ private extension HTTPClient {
             summary: ((object as? Summarizable)?.summary) ?? encodedObject.summary
         )
 
-        let request = Request(url: url, method: method, payload: payload, accept: .binary)
+        let request = ClientRequest(url: url, method: method, payload: payload, accept: .binary)
 
         return try await sendRequest(request)
     }
 
-    private func process<SentObject: Encodable, ReceivedObject: Decodable>(_ method: Method, object: SentObject, url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> (ReceivedObject, HTTPURLResponse) {
+    private func process<SentObject: Encodable, ReceivedObject: Decodable>(_ method: Method, object: SentObject, url: URL, headers: [String: String], context: [CodingUserInfoKey: Sendable]?) async throws -> ReceivedObject {
 
         let encodedObject = try jsonCoder.encode(object, context: context)
 
@@ -862,22 +862,20 @@ private extension HTTPClient {
             summary: ((object as? Summarizable)?.summary) ?? encodedObject.summary
         )
 
-        let request = Request(url: url, method: .put, payload: payload, accept: .json)
+        let request = ClientRequest(url: url, method: .put, payload: payload, accept: .json)
 
         return try await sendRequestAndDecode(request, context: context)
     }
 
-    private func sendRequestAndDecode<T: Decodable>(_ request: Request, context: [CodingUserInfoKey: any Sendable]?) async throws -> (T, HTTPURLResponse) {
+    private func sendRequestAndDecode<T: Decodable>(_ request: ClientRequest, context: [CodingUserInfoKey: any Sendable]?) async throws -> T {
 
-        let (data, response) = try await sendRequest(request)
+        let data = try await sendRequest(request)
 
         guard let data else {
             throw JSONCoder.Error(description: "HTTP request returned no data.", process: .decode)
         }
 
-        let object: T = try jsonCoder.decode(data, context: context)
-
-        return (object, response)
+        return try jsonCoder.decode(data, context: context)
     }
 
     final class RequestCounter {
