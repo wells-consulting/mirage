@@ -7,7 +7,7 @@ import Foundation
 
 public protocol MirageError: LocalizedError, CustomStringConvertible, CustomDebugStringConvertible, Titled, Sendable {
     var underlyingError: (any Swift.Error)? { get }
-    var context: [String: any Sendable]? { get }
+    var userInfo: [String: any Sendable]? { get }
 }
 
 public extension MirageError {
@@ -19,8 +19,8 @@ public extension MirageError {
             string.append("\nUnderyling Error: " + Self.describe(underlyingError))
         }
 
-        if let context, !context.isEmpty {
-            string.append("\nContext: " + String(describing: context))
+        if let userInfo, !userInfo.isEmpty {
+            string.append("\nUserInfo: " + String(describing: userInfo))
         }
 
         return string

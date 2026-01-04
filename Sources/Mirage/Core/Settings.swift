@@ -71,7 +71,7 @@ public enum Settings {
 
         let encodedValue = try JSONCoder.shared.encode(value)
         guard let jsonText = String(data: encodedValue, encoding: .utf8) else {
-            throw Mirage.Error(description: "Failed to convert \"\(value.self)\" to a string.", title: "Stash Save Failed", context: ["url": fileURL, "data_size": encodedValue.count.formatted(.byteCount(style: .file))])
+            throw Mirage.Error(description: "Failed to convert \"\(value.self)\" to a string.", title: "Stash Save Failed", userInfo: ["url": fileURL, "data_size": encodedValue.count.formatted(.byteCount(style: .file))])
         }
 
         let data = Data(jsonText.utf8)

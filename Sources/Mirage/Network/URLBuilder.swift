@@ -456,22 +456,22 @@ public final class URLBuilder {
         public let underlyingError: (any Swift.Error)?
 
         /// Error-specific context
-        public let context: [String: any Sendable]?
+        public let userInfo: [String: any Sendable]?
 
-        init(description: String, title: String? = nil, urlString: String? = nil, urlComponents: URLComponents? = nil, underlyingError: (any Swift.Error)? = nil, context: [String: any Sendable]? = nil) {
+        init(description: String, title: String? = nil, urlString: String? = nil, urlComponents: URLComponents? = nil, underlyingError: (any Swift.Error)? = nil, userInfo: [String: any Sendable]? = nil) {
             self.description = description
             self.title = title
             self.underlyingError = underlyingError
 
-            var implicitContext: [String: any Sendable] = context ?? [:]
+            var implicitUserInfo: [String: any Sendable] = userInfo ?? [:]
 
             self.urlString = urlString
-            implicitContext["url_string"] = urlString
+            implicitUserInfo["url_string"] = urlString
 
             self.urlComponents = urlComponents
-            implicitContext["url_components"] = urlComponents
+            implicitUserInfo["url_components"] = urlComponents
 
-            self.context = implicitContext
+            self.userInfo = implicitUserInfo
         }
     }
 }

@@ -28,7 +28,7 @@ public final class CSVBuilder {
             let url = try FileManager.default.url(for: .downloadsDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent(filename)
             try save(to: url)
         } catch {
-            throw Self.Error(description: error.localizedDescription, title: "Save CSV Failed", underlyingError: error, context: ["url": nil, "filename": filename])
+            throw Self.Error(description: error.localizedDescription, title: "Save CSV Failed", underlyingError: error, userInfo: ["url": nil, "filename": filename])
         }
     }
 
@@ -40,7 +40,7 @@ public final class CSVBuilder {
         do {
             try data.write(to: url, options: [.atomic, .completeFileProtection])
         } catch {
-            throw Self.Error(description: error.localizedDescription, title: "Save CSV Failed", underlyingError: error, context: ["url": url, "data_size": data.count.formatted(.byteCount(style: .file))])
+            throw Self.Error(description: error.localizedDescription, title: "Save CSV Failed", underlyingError: error, userInfo: ["url": url, "data_size": data.count.formatted(.byteCount(style: .file))])
         }
     }
 
@@ -58,13 +58,13 @@ public final class CSVBuilder {
         public let underlyingError: (any Swift.Error)?
 
         /// Error-specific context
-        public let context: [String: any Sendable]?
+        public let userInfo: [String: any Sendable]?
 
-        init(description: String, title: String? = nil, underlyingError: (any Swift.Error)? = nil, context: [String: any Sendable]? = nil) {
+        init(description: String, title: String? = nil, underlyingError: (any Swift.Error)? = nil, userInfo: [String: any Sendable]? = nil) {
             self.description = description
             self.title = title ?? "CSV Error"
             self.underlyingError = underlyingError
-            self.context = context
+            self.userInfo = userInfo
         }
     }
 }

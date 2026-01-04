@@ -56,20 +56,20 @@ public struct JSONCoder: Sendable {
     ///
     /// - Throws
     ///     - JSONError if the value could not be encoded.
-    public func encode<T: Encodable>(_ value: T, context: [CodingUserInfoKey: Sendable]? = nil) throws -> Data {
+    public func encode<T: Encodable>(_ value: T, userInfo: [CodingUserInfoKey: Sendable]? = nil) throws -> Data {
         var message = ""
         var underlyingError: (any Swift.Error)?
 
         do {
-            if let context {
-                for (key, value) in context {
+            if let userInfo {
+                for (key, value) in userInfo {
                     encoder.userInfo[key] = value
                 }
             }
 
             defer {
-                if let context {
-                    for (key, _) in context {
+                if let userInfo {
+                    for (key, _) in userInfo {
                         encoder.userInfo.removeValue(forKey: key)
                     }
                 }
@@ -87,13 +87,13 @@ public struct JSONCoder: Sendable {
 
         logger.error(message)
 
-        let errorContext: [String: any Sendable]? = if let context {
-            Dictionary(uniqueKeysWithValues: context.map { ($0.key.rawValue, $0.value) })
+        let errorUserInfo: [String: any Sendable]? = if let userInfo {
+            Dictionary(uniqueKeysWithValues: userInfo.map { ($0.key.rawValue, $0.value) })
         } else {
             nil
         }
 
-        throw Self.Error(description: message, process: .encode, underlyingError: underlyingError, context: errorContext)
+        throw Self.Error(description: message, process: .encode, underlyingError: underlyingError, userInfo: errorUserInfo)
     }
 
     // MARK: - Decode
@@ -109,7 +109,7 @@ public struct JSONCoder: Sendable {
     ///
     /// - Throws
     ///     - JSONError if the value could not be decoded.
-    public func decode<T: Decodable>(_ data: Data?, context: [CodingUserInfoKey: Sendable]? = nil) throws -> T {
+    public func decode<T: Decodable>(_ data: Data?, userInfo: [CodingUserInfoKey: Sendable]? = nil) throws -> T {
         guard let data else {
             let message = "\(T.self) could not be created: no data"
             logger.error(message)
@@ -120,15 +120,15 @@ public struct JSONCoder: Sendable {
         var underlyingError: (any Swift.Error)?
 
         do {
-            if let context {
-                for (key, value) in context {
+            if let userInfo {
+                for (key, value) in userInfo {
                     decoder.userInfo[key] = value
                 }
             }
 
             defer {
-                if let context {
-                    for (key, _) in context {
+                if let userInfo {
+                    for (key, _) in userInfo {
                         decoder.userInfo.removeValue(forKey: key)
                     }
                 }
@@ -172,13 +172,13 @@ public struct JSONCoder: Sendable {
 
         logger.error(message)
 
-        let errorContext: [String: any Sendable]? = if let context {
-            Dictionary(uniqueKeysWithValues: context.map { ($0.key.rawValue, $0.value) })
+        let errorUserInfo: [String: any Sendable]? = if let userInfo {
+            Dictionary(uniqueKeysWithValues: userInfo.map { ($0.key.rawValue, $0.value) })
         } else {
             nil
         }
 
-        throw Self.Error(description: message, process: .decode, data: data, underlyingError: underlyingError, context: errorContext)
+        throw Self.Error(description: message, process: .decode, data: data, underlyingError: underlyingError, userInfo: errorUserInfo)
     }
 
     // MARK: - Stringify
@@ -224,9 +224,9 @@ public struct JSONCoder: Sendable {
         let underlyingError: (any Swift.Error)?
 
         /// Error-specific context
-        let context: [String: any Sendable]?
+        let userInfo: [String: any Sendable]?
 
-        init(description: String, title: String? = nil, process: Process, data: Data? = nil, underlyingError: (any Swift.Error)? = nil, context: [String: any Sendable]? = nil) {
+        init(description: String, title: String? = nil, process: Process, data: Data? = nil, underlyingError: (any Swift.Error)? = nil, userInfo: [String: any Sendable]? = nil) {
             switch process {
             case .encode:
                 self.description = "JSON Encode Error: \(description)"
@@ -237,12 +237,12 @@ public struct JSONCoder: Sendable {
             self.title = title ?? "JSON Error"
             self.process = process
 
-            var implicitContext: [String: any Sendable] = context ?? [:]
+            var implicitUserInfo: [String: any Sendable] = userInfo ?? [:]
 
             if let data {
-                implicitContext["data_size"] = data.count.formatted(.byteCount(style: .memory))
+                implicitUserInfo["data_size"] = data.count.formatted(.byteCount(style: .memory))
                 if let jsonText = String(data: data, encoding: .utf8) {
-                    implicitContext["json"] = jsonText
+                    implicitUserInfo["json"] = jsonText
                     self.jsonText = jsonText
                 } else {
                     self.jsonText = nil
@@ -252,7 +252,7 @@ public struct JSONCoder: Sendable {
             }
 
             self.underlyingError = underlyingError
-            self.context = implicitContext
+            self.userInfo = implicitUserInfo
         }
     }
 }
