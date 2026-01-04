@@ -446,6 +446,9 @@ public final class URLBuilder {
         /// Localized message text
         public let description: String
 
+        /// LocalizedError conformance
+        public var errorDescription: String? { description }
+
         /// URL as a string
         public let urlString: String?
 

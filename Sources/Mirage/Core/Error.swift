@@ -13,6 +13,9 @@ public enum Mirage {
         /// Localized error description
         public let description: String
 
+        /// LocalizedError conformance
+        public var errorDescription: String? { description }
+
         /// Localized title text
         public let title: String?
 

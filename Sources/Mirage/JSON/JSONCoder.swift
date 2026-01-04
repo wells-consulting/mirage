@@ -201,30 +201,33 @@ public struct JSONCoder: Sendable {
 
     // MARK: - Error
 
-    struct Error: MirageError {
+    public struct Error: MirageError {
 
-        enum Process: Sendable {
+        public enum Process: Sendable {
             case encode
             case decode
         }
 
         /// Localized title text
-        let title: String?
+        public let title: String?
 
         /// Localized message text
-        let description: String
+        public let description: String
+
+        /// LocalizedError conformance
+        public var errorDescription: String? { description }
 
         /// Error source: encoding or decoding
-        let process: Process
+        public let process: Process
 
         /// JSON text
-        let jsonText: String?
+        public let jsonText: String?
 
         /// Wrapped error
-        let underlyingError: (any Swift.Error)?
+        public let underlyingError: (any Swift.Error)?
 
         /// Error-specific context
-        let userInfo: [String: any Sendable]?
+        public let userInfo: [String: any Sendable]?
 
         init(description: String, title: String? = nil, process: Process, data: Data? = nil, underlyingError: (any Swift.Error)? = nil, userInfo: [String: any Sendable]? = nil) {
             switch process {

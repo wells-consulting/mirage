@@ -572,6 +572,9 @@ public extension HTTPClient {
         /// Localized error text
         public let description: String
 
+        /// LocalizedError conformance
+        public var errorDescription: String? { description }
+
         /// Underlying URLRequest
         public let urlRequest: URLRequest?
 
