@@ -1,6 +1,6 @@
 ### Built-in Rules
 
---header "\nCopyright 2025 Wells Consulting.\nThis file is part of Mirage and is released under the MIT License.\n"
+--header "\nCopyright 2025 Wells Consulting.\nThis file is part of MirageKit and is released under the MIT License.\n"
 
 --ifdef outdent
 --self init-only

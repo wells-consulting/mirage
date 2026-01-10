@@ -1,11 +1,11 @@
 //
 // Copyright 2025 Wells Consulting.
-// This file is part of Mirage and is released under the MIT License.
+// This file is part of MirageKit and is released under the MIT License.
 //
 
 #if canImport(SwiftUI)
 
-import Mirage
+import MirageCore
 import SwiftUI
 
 private struct AlertMessageViewModifier: ViewModifier {

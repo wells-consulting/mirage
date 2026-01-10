@@ -1,10 +1,10 @@
 //
 // Copyright 2025 Wells Consulting.
-// This file is part of Mirage and is released under the MIT License.
+// This file is part of MirageKit and is released under the MIT License.
 //
 
 import Foundation
-import Mirage
+import MirageCore
 
 public final class DecimalValidator: Validator {
 
@@ -24,14 +24,14 @@ public final class DecimalValidator: Validator {
 
     func addRequirement(_ requirement: Requirement) throws {
         if case .validFormat = requirement {
-            throw Mirage.Error(description: "The valid format requirement canned be added to \(self).", title: "Validation Setup Failed")
+            throw MirageCore.Error(description: "The valid format requirement canned be added to \(self).", title: "Validation Setup Failed")
         }
         requirements.update(with: requirement)
     }
 
     func removeRequirement(_ requirement: Requirement) throws {
         if case .validFormat = requirement {
-            throw Mirage.Error(description: "The valid format requirement cannot be removed from \(self).", title: "Validation Setup Failed")
+            throw MirageCore.Error(description: "The valid format requirement cannot be removed from \(self).", title: "Validation Setup Failed")
         }
         requirements.remove(requirement)
     }

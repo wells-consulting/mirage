@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Mirage",
+    name: "MirageKit",
     platforms: [
         .iOS(.v16),
         .watchOS(.v9),
@@ -11,22 +11,22 @@ let package = Package(
         .macOS(.v13)
     ],
     products: [
-        .library(name: "Mirage", targets: ["Mirage"]),
+        .library(name: "MirageCore", targets: ["MirageCore"]),
         .library(name: "MirageUI", targets: ["MirageUI"])
     ],
     targets: [
         .target(
-            name: "Mirage",
-            path: "Sources/Mirage"
+            name: "MirageCore",
+            path: "Sources/MirageCore"
         ),
         .testTarget(
-            name: "MirageTests",
-            dependencies: ["Mirage"],
-            path: "Tests/MirageTests"
+            name: "MirageCoreTests",
+            dependencies: ["MirageCore"],
+            path: "Tests/MirageCoreTests"
         ),
         .target(
             name: "MirageUI",
-            dependencies: ["Mirage"],
+            dependencies: ["MirageCore"],
             path: "Sources/MirageUI"
         )
     ]
