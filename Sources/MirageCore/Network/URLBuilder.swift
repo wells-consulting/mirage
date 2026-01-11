@@ -109,6 +109,22 @@ public final class URLBuilder {
         self.overrideDateFormatter = dateFormatter
     }
 
+    /// Initialize a builder from another URL.
+    ///
+    /// - Parameters:
+    ///     - url: A valid URL that includes, at a minimum, a scheme and host.
+    ///     - dateFormatter: Dates are formatted by default in ISO8601. Provide another formatter
+    ///     to change this behavior.
+    ///
+    /// - Returns:
+    ///     - Initialized URLBuilder
+    ///
+    /// - Throws:
+    ///     - URLError if the string cannot be parsed by URLComponents or is missing a scheme or host
+    public convenience init(_ url: URL, dateFormatter: DateFormatter? = nil) throws {
+        try self.init(url.absoluteString, dateFormatter: dateFormatter)
+    }
+
     // MARK: - Build
 
     /// Create URL from the current builder state.
